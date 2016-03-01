@@ -377,13 +377,6 @@ class ilSkinTransformerUIHookGUI extends ilUIHookPluginGUI
 							$type = $parts[1];
 							$match = ($value == $type) ? $match : false;
 						}
-						// fim: [link] studon specific perma links
-						elseif (preg_match('/^([a-z]+)[0-9]+.*\.html$/', $script, $parts))
-						{
-							$type = $parts[1];
-							$match = ($value == $type) ? $match : false;
-						}
-						// fim.
 						else
 						{
 							$match = false;
