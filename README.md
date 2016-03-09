@@ -22,5 +22,5 @@ Usage
 This plugin for the LMS ILIAS open source allows to adapt the user interface with XSL transformations 
 being applied to the html code before delivery.
 
-See [Example](examples/skin_transformations.xsl) for details.
+See [Example](examples/skin_transformations.xml) for details.
 
