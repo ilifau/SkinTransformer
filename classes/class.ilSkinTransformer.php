@@ -81,7 +81,9 @@ class ilSkinTransformer
 				return '';
 			}
 		}
-		
+
+
+
 		// Get the processor with loaded XSL stylesheet
 		if (!$xslt = $this->getXSLProcessor($a_trans))
 		{
@@ -90,15 +92,31 @@ class ilSkinTransformer
 			print_r($a_trans);
 			return $a_code;
 		}
-				
-		// Provide the function parameters directly
-		$xslt->setParameter('', $a_trans);
+
+		// mask all not empty script elements with numbered placeholders
+		// this avoids parsing errors by DOMDocument
+		//
+		// The pattern matches anything that starts with '<script'
+		// followed by zero or more of anything that is not a '>',
+		// followed by a '>',
+		// followed by anything (and that part gets captured),
+		// followed by a closing '<script>' tag.
+		// The 'Uis' modifiers mean to make it Ungreedy, case-insensitive,
+		// and to match newlines in the dot metacharacter.
+		$pattern = "/<script[^>]*>(.*)<\/script>/Uis";
+		preg_match_all($pattern, $a_code, $matches);
+		for ($i = 0; $i < count($matches[0]); $i++)
+		{
+			if ($matches[1][$i] != '')
+			{
+				$a_code = str_replace($matches[0][$i],"<script>$i</script>", $a_code);
+			}
+		}
 
 		// Get the code to be transformed as a DOM object
 		// Use HTML loading for fault tolerance (doesn't need to be well-formed)
 		// Apply handling of utf-8 due to bugs in loadHTML()
 		// Note: <html> and <body> elements will automatically be added!
-		
 		$dom_doc = new DOMDocument('1.0', 'UTF-8');
 		if ($a_trans['utf8fix'] == 'entities')
 		{
@@ -114,14 +132,32 @@ class ilSkinTransformer
 		{
 			@$dom_doc->loadHTML($a_code);
 	    }
-		        		
+
+
 		if ($a_trans['debug'] == 'dom')
 		{
-			return $dom_doc->saveHTML();
+			$return = $dom_doc->saveHTML();
 		}
-		
-		// Process and supress warnings (e.g. due to '&' in links)
-		return $xslt->transformToXML($dom_doc);
+		else
+		{
+			// Provide the function parameters directly
+			$xslt->setParameter('', $a_trans);
+
+			// Process and supress warnings (e.g. due to '&' in links)
+			$return = $xslt->transformToXML($dom_doc);
+		}
+
+
+		// undo the replacement of non-empty script elements
+		for ($i = 0; $i < count($matches[0]); $i++)
+		{
+			if ($matches[1][$i] != '')
+			{
+				$return = str_replace("<script>$i</script>",$matches[0][$i], $return);
+			}
+		}
+
+		return $return;
 	}
 	
 	
